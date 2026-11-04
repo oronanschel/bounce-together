@@ -16,6 +16,7 @@ var hud
 var arena
 var round_over := false
 var hit_cooldowns := {}
+var rim_cooldowns := {}
 var bot_think_time := 0.0
 
 
@@ -84,6 +85,7 @@ func start_round() -> void:
 		p.queue_free()
 	players.clear()
 	hit_cooldowns.clear()
+	rim_cooldowns.clear()
 	bot_think_time = 0.0
 	round_over = false
 	var visual := preload("res://scripts/character_visual.gd")
@@ -141,6 +143,11 @@ func _physics_process(delta: float) -> void:
 		hit_cooldowns[key] -= delta
 		if hit_cooldowns[key] <= 0.0:
 			hit_cooldowns.erase(key)
+	for key in rim_cooldowns.keys():
+		rim_cooldowns[key] -= delta
+		if rim_cooldowns[key] <= 0.0:
+			rim_cooldowns.erase(key)
+	_resolve_rim()
 	_resolve_bumps()
 
 	# Mark all falls first so simultaneous knockouts can produce a draw.
@@ -219,3 +226,23 @@ func _resolve_bumps() -> void:
 			a.velocity.y = maxf(a.velocity.y, Tuning.HIT_LIFT)
 			b.velocity.y = maxf(b.velocity.y, Tuning.HIT_LIFT)
 			hit_cooldowns[key] = Tuning.HIT_COOLDOWN
+
+
+## The inflatable rim returns ordinary outward motion, but hard hits can escape.
+func _resolve_rim() -> void:
+	for p in players:
+		if p.is_out or rim_cooldowns.has(p):
+			continue
+		var radial := Vector2(p.global_position.x, p.global_position.z)
+		if radial.length() < Tuning.ARENA_RADIUS - Tuning.RIM_INSET:
+			continue
+		if p.global_position.y < 0.0 or p.global_position.y > Tuning.RIM_HEIGHT:
+			continue
+		var outward := radial.normalized()
+		var total_motion := Vector2(p.velocity.x + p.knockback.x, p.velocity.z + p.knockback.z)
+		var outward_speed := total_motion.dot(outward)
+		if outward_speed <= 0.0 or outward_speed >= Tuning.RIM_BREAK_SPEED:
+			continue
+		var correction := outward * (outward_speed + Tuning.RIM_REBOUND_SPEED)
+		p.knockback -= Vector3(correction.x, 0, correction.y)
+		rim_cooldowns[p] = Tuning.RIM_COOLDOWN

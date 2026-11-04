@@ -15,6 +15,17 @@ func check_round() -> void:
 	b.position = Vector3(1, 1, 0)
 	game._resolve_bumps()
 	assert(a.knockback.x < 0 and b.knockback.x > 0)
+	var tuning = load("res://scripts/physics_tuning.gd")
+	a.position = Vector3(tuning.ARENA_RADIUS - 0.2, 0.2, 0)
+	a.knockback = Vector3.ZERO
+	a.velocity = Vector3(4, 0, 0)
+	game._resolve_rim()
+	assert(a.knockback.x < -4.0)
+	game.rim_cooldowns.clear()
+	a.knockback = Vector3.ZERO
+	a.velocity = Vector3(tuning.RIM_BREAK_SPEED + 1.0, 0, 0)
+	game._resolve_rim()
+	assert(a.knockback == Vector3.ZERO)
 	for i in range(1, 7):
 		game.players[i].position.y = -1
 	game._physics_process(0.016)
