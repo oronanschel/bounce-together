@@ -40,7 +40,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
-		velocity.y -= Tuning.GRAVITY * delta
+		var gravity := Tuning.RISE_GRAVITY
+		if velocity.y < 0.0:
+			gravity *= Tuning.FALL_GRAVITY_MULTIPLIER
+		velocity.y -= gravity * delta
 		_last_fall_speed = max(_last_fall_speed, -velocity.y)
 
 	var input := Vector2.ZERO
@@ -56,8 +59,9 @@ func _physics_process(delta: float) -> void:
 		knockback += Vector3(_last_direction.x, 0, _last_direction.y) * Tuning.DASH_IMPULSE
 		_dash_cooldown = Tuning.DASH_COOLDOWN
 	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
-	velocity.x = move_toward(velocity.x, target.x, Tuning.MOVE_ACCEL * delta)
-	velocity.z = move_toward(velocity.z, target.z, Tuning.MOVE_ACCEL * delta)
+	var acceleration := Tuning.GROUND_ACCEL if is_on_floor() else Tuning.AIR_ACCEL
+	velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
+	velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
 
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	if not is_out and (bot_jump if is_bot else Input.is_action_just_pressed("jump")):

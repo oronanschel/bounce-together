@@ -13,6 +13,14 @@ func check_bounces() -> void:
 		game.players[i].set_physics_process(false)
 		game.players[i].position = Vector3(30 + i * 2, 1, 0)
 	var p = game.players[0]
+	p.position = Vector3(0, 5, 0)
+	p.velocity = Vector3(0, 5, 0)
+	p._physics_process(0.01)
+	var rise_change: float = 5.0 - p.velocity.y
+	p.velocity.y = -5.0
+	p._physics_process(0.01)
+	var fall_change: float = -5.0 - p.velocity.y
+	assert(fall_change > rise_change)
 	p.position = Vector3(0, 0.5, 0)
 	p.velocity = Vector3(0, -6, 0)
 	var normal := await _wait_for_rebound(p)

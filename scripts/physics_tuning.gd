@@ -5,9 +5,11 @@ extends RefCounted
 const ARENA_RADIUS := 8.0
 const OUT_HEIGHT := -0.8
 const MOVE_SPEED := 6.0
-const MOVE_ACCEL := 30.0
+const GROUND_ACCEL := 30.0
+const AIR_ACCEL := 30.0
 const JUMP_VELOCITY := 9.0
-const GRAVITY := 22.0
+const RISE_GRAVITY := 22.0
+const FALL_GRAVITY_MULTIPLIER := 1.35
 const BOUNCE_RATIO := 0.58
 const MIN_BOUNCE_VELOCITY := 5.0
 const TIMED_BOUNCE_BONUS := 3.0
