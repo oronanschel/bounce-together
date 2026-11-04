@@ -5,9 +5,10 @@ world units (1 unit ≈ 1 m; the bouncer capsule is 1.5 tall, the arena radius i
 and seconds. Everything here is a **starting point to playtest**, not a law. The
 numbers map onto constants in `scripts/physics_tuning.gd`.
 
-Sources are cited from memory of the talks and books; the Celeste figures come from
-its published movement code and talks. Where a number is my own judgment for this
-game, it says "ours".
+**Verification status.** I checked what I could on the web. Verified items are linked
+under Sources. Everything else, including all the numbers in the table below, is a
+**proposed estimate** for this game to playtest, not a figure taken from a source.
+Details of talks I could not open (slides, hitstop frame counts) are from memory.
 
 ## Principles
 
@@ -18,7 +19,7 @@ game, it says "ours".
    about the same, and never let a physics effect take steering away for long.
 2. **Define the jump by height and time, not by velocity and gravity.** Pick the
    apex height `h` and the time to apex `t`, then derive `g = 2h / t²` and
-   `v0 = 2h / t` (Kyle Pittman, "Building a Better Jump", GDC 2016). This makes
+   `v0 = 2h / t` (Pittman, GDC 2016; see Sources). This makes
    the jump tunable in terms a designer can feel.
 3. **Floaty up, snappy down.** Rise with lower gravity, fall with a multiplier
    (about 1.5–2×). Add reduced gravity near the apex while jump is held for a
@@ -122,11 +123,28 @@ Play the real web build, keyboard first, then touch.
 
 ## Sources
 
-- Steve Swink, *Game Feel: A Game Designer's Guide to Virtual Sensation* (2008).
-- Martin Jonasson and Petri Purho, "Juice it or lose it", Nordic Game 2012 (talk).
-- Kyle Pittman, "Math for Game Programmers: Building a Better Jump", GDC 2016.
-- Maddy Thorson / Extremely OK Games, Celeste (player movement source and talks):
-  run accel, apex half gravity, coyote and jump-buffer windows, variable jump.
-- Jan Willem Nijman (Vlambeer), "The Art of Screenshake" (2013, talk).
-- Fighting-game hitstop practice and Smash-style knockback: community frame-data
-  documentation; treat the frame counts above as approximate.
+What each link supports, and what I could and could not verify:
+
+- Steve Swink, *Game Feel* (2008): book, not checked online; the "real-time control,
+  simulated space, polish" framing is from memory. Author's site: https://www.game-feel.com/
+- Kyle Pittman, "Math for Game Programmers: Building a Better Jump", GDC 2016:
+  https://gdcvault.com/play/1023148/Math-for-Game-Programmers-Building (login-gated).
+  Secondary summaries confirm it derives gravity and initial velocity from a wanted
+  jump height (and time/distance) and uses different gravity for rise and fall.
+  The `g = 2h/t²`, `v0 = 2h/t` form is the standard projectile formula that follows
+  from this, not a quote from the talk.
+- Martin Jonasson and Petri Purho, "Juice it or lose it" (2012):
+  https://gdcvault.com/play/1016789/Juice-It-or-Lose (free video). Shows a
+  Breakout game made "juicier" with feedback tricks; venue is listed as GDC Europe
+  2012 and also described as Nordic Game 2012.
+- Jan Willem Nijman (Vlambeer), "The Art of Screenshake", INDIGO 2013: widely
+  listed at https://www.youtube.com/watch?v=AJdEqssNZ-U (link taken from a listing,
+  not verified by me). Basis for stacking feedback such as shake.
+- Celeste movement code (NoelFB/Celeste on GitHub, `Source/Player/Player.cs`):
+  https://github.com/NoelFB/Celeste. A secondary summary
+  (https://deepwiki.com/NoelFB/Celeste/2.3-player-movement-and-physics) lists
+  max run 90, run accel 1000, run reduce 400, air multiplier 0.65. I could **not**
+  verify its gravity, max fall, apex half-gravity threshold or the 0.1 s coyote/buffer
+  windows, so those are proposals here, not citations.
+- Hitstop and Smash-style knockback scaling: general fighting-game practice; no
+  single source checked. The 50–130 ms range is a proposed estimate.
