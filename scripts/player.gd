@@ -4,20 +4,25 @@ extends CharacterBody3D
 ## hard landings bounce you back up a little.
 
 signal landed(impact: float)
+signal launched(speed: float, timed: bool)
 
 const CharacterVisual := preload("res://scripts/character_visual.gd")
+const Tuning := preload("res://scripts/physics_tuning.gd")
 
 var body_color := Color("8f5bd8")
 var is_out := false
-
-const SPEED := 6.0
-const ACCEL := 30.0
-const JUMP_VELOCITY := 9.0
-const GRAVITY := 22.0
-const BOUNCE := 0.45
+var is_bot := false
+var bot_direction := Vector2.ZERO
+var bot_jump := false
+var impact_velocity := Vector3.ZERO
+var _hit_control_time := 0.0
 
 var _was_on_floor := false
 var _last_fall_speed := 0.0
+var _jump_buffer := 0.0
+var _dash_requested := false
+var _dash_cooldown := 0.0
+var _last_direction := Vector2.DOWN
 var _visual
 
 
@@ -35,21 +40,54 @@ func _ready() -> void:
 	add_child(_visual)
 
 
+func _input(event: InputEvent) -> void:
+	if is_bot or is_out or event.is_echo():
+		return
+	if event.is_action_pressed("jump"):
+		_jump_buffer = Tuning.JUMP_BUFFER_SECONDS
+	if event.is_action_pressed("dash"):
+		_dash_requested = true
+
+
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
-		velocity.y -= GRAVITY * delta
+		var gravity := Tuning.RISE_GRAVITY
+		if velocity.y < 0.0:
+			gravity *= Tuning.FALL_GRAVITY_MULTIPLIER
+		velocity.y = maxf(-Tuning.TERMINAL_FALL_SPEED, velocity.y - gravity * delta)
 		_last_fall_speed = max(_last_fall_speed, -velocity.y)
 
 	var input := Vector2.ZERO
 	if not is_out:
-		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var target := Vector3(input.x, 0, input.y) * SPEED
-	velocity.x = move_toward(velocity.x, target.x, ACCEL * delta)
-	velocity.z = move_toward(velocity.z, target.z, ACCEL * delta)
+		if is_bot:
+			input = bot_direction
+		else:
+			input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if input.length_squared() > 0.01:
+		_last_direction = input.normalized()
+	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
+	if not is_out and not is_bot and (_dash_requested or Input.is_action_just_pressed("dash")):
+		try_dash(_last_direction)
+	_dash_requested = false
+	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
+	_hit_control_time = maxf(0.0, _hit_control_time - delta)
+	var acceleration := Tuning.GROUND_ACCEL if is_on_floor() else Tuning.AIR_ACCEL
+	if is_on_floor() and input.length_squared() < 0.01:
+		acceleration = Tuning.GROUND_DECEL
+	if _hit_control_time > 0.0:
+		acceleration *= Tuning.HIT_CONTROL_FACTOR
+	velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
+	velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
 
-	if is_on_floor() and not is_out and Input.is_action_just_pressed("jump"):
-		velocity.y = JUMP_VELOCITY
+	_jump_buffer = maxf(0.0, _jump_buffer - delta)
+	if not is_out and (bot_jump if is_bot else Input.is_action_just_pressed("jump")):
+		_jump_buffer = Tuning.JUMP_BUFFER_SECONDS
+	if is_on_floor() and not is_out and _was_on_floor and _jump_buffer > 0.0:
+		velocity.y = Tuning.JUMP_VELOCITY
+		_jump_buffer = 0.0
+		launched.emit(velocity.y, false)
 
+	impact_velocity = velocity
 	move_and_slide()
 
 	if is_on_floor() and not _was_on_floor:
@@ -57,12 +95,32 @@ func _physics_process(delta: float) -> void:
 		_last_fall_speed = 0.0
 		_visual.land(impact)
 		landed.emit(impact)
-		if impact > 4.0 and not is_out:
-			velocity.y = impact * BOUNCE
+		if not is_out:
+			velocity.y = maxf(Tuning.MIN_BOUNCE_VELOCITY, impact * Tuning.BOUNCE_RATIO)
+			var timed := _jump_buffer > 0.0
+			if timed:
+				velocity.y = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, velocity.y + Tuning.TIMED_BOUNCE_BONUS)
+				_jump_buffer = 0.0
+			launched.emit(velocity.y, timed)
 	_was_on_floor = is_on_floor()
 
 	_visual.face(input, delta)
 	_visual.set_motion(Vector2(velocity.x, velocity.z).length(), velocity.y, _ground_y())
+
+
+## The same dash and cooldown apply to both player and computer opponents.
+func try_dash(direction: Vector2) -> void:
+	if is_out or _dash_cooldown > 0.0 or direction.length_squared() < 0.01:
+		return
+	var dash_dir := direction.normalized()
+	apply_impulse(Vector3(dash_dir.x, 0, dash_dir.y) * Tuning.DASH_IMPULSE)
+	_dash_cooldown = Tuning.DASH_COOLDOWN
+
+
+## Impulses become velocity so steering can counter them instead of fighting wind.
+func apply_impulse(impulse: Vector3) -> void:
+	velocity += impulse
+	_hit_control_time = Tuning.HIT_CONTROL_SECONDS
 
 
 ## Height of whatever is below us (for the blob shadow).

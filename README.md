@@ -5,8 +5,8 @@ An open Godot party-game project, starting with a bouncy last-player-standing ar
 
 A Soft Play arena in Godot 4.7.2 + GDScript, exported for the browser.
 
-- **Controls:** WASD / arrow keys to move, Space to jump, R to restart. On touch screens: drag on the left half to move, tap JUMP; tap to restart after a round.
-- **Rules (so far):** fall off the teal floor and you're out. Multiple bouncers, knockouts and last-one-standing are coming next.
+- **Controls:** WASD / arrow keys to move, Space to jump or time a stronger landing bounce, Shift to dash, R to restart. The floor rebounds automatically. On touch screens: drag on the left half to move, tap JUMP or DASH; tap to restart after a round.
+- **Rules:** You are purple. Bump into six computer opponents to knock them off the teal floor; falling out eliminates a bouncer, and the last one standing wins. Press R (or tap after the round) for a fresh round.
 
 ### Play the web build locally
 
@@ -33,12 +33,16 @@ python3 -m http.server 8000 --directory build/web
    or clear the custom template fields to use your installed templates. Then:
    `godot --headless --path . --export-release Web build/web/index.html`
 
+### Gameplay smoke check
+
+Run `godot --headless --path . --script res://tests/round_smoke.gd` to check rounds, and `godot --headless --path . --script res://tests/bounce_smoke.gd` to check automatic and timed rebounds. `godot --headless --fixed-fps 60 --path . --script res://tests/chain_smoke.gd` checks three timed landings build height without exceeding the cap. Run `godot --headless --fixed-fps 60 --path . --script res://tests/feel_smoke.gd` to check passive rebound height and sustained rim pressure. `godot --headless --fixed-fps 60 --path . --script res://tests/round_duration_probe.gd` samples ten unattended rounds (capped at 90 seconds each); it is a diagnostic, not a feel test. Gameplay values live in `scripts/physics_tuning.gd` and are provisional until playtesting.
+
 ### Layout
 
 | Path | What | Owner (current) |
 | --- | --- | --- |
-| `scripts/main.gd` | round manager: spawn, out check, restart | gameplay (ring-builder) |
-| `scripts/player.gd` | placeholder bouncer: movement, jump, squash & stretch | gameplay + look |
+| `scripts/main.gd` | round manager: spawn, out check, restart | gameplay (codex-bouncer) |
+| `scripts/player.gd` | placeholder bouncer: movement, jump, squash & stretch | gameplay (codex-bouncer), visual hooks (bounce-artist) |
 | `scripts/arena.gd` | floor, rim, room | physics + look |
 | `scripts/ui.gd`, `scripts/room.gd`, `scripts/fx.gd`, `shaders/` | HUD, room, effects, materials | look & feel (bounce-artist) |
 | `docs/reference/` | visual reference (concept art, not gameplay) | — |
