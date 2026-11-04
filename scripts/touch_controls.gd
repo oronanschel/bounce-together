@@ -9,11 +9,13 @@ const CREAM := Color("fffaf0")
 const CORAL := Color("f2766b")
 const STICK_RADIUS := 80.0
 const JUMP_RADIUS := 70.0
+const DASH_RADIUS := 55.0
 
 var _stick_finger := -1
 var _stick_origin := Vector2.ZERO
 var _stick_pos := Vector2.ZERO
 var _jump_finger := -1
+var _dash_finger := -1
 ## Set by the HUD while the game-over / win overlay is showing.
 var restart_enabled := false
 
@@ -32,6 +34,10 @@ func _jump_center() -> Vector2:
 	return _screen() - Vector2(130, 140)
 
 
+func _dash_center() -> Vector2:
+	return _screen() - Vector2(285, 115)
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		visible = true
@@ -39,6 +45,9 @@ func _input(event: InputEvent) -> void:
 			if event.position.distance_to(_jump_center()) < JUMP_RADIUS * 1.4:
 				_jump_finger = event.index
 				Input.action_press("jump")
+			elif event.position.distance_to(_dash_center()) < DASH_RADIUS * 1.25:
+				_dash_finger = event.index
+				Input.action_press("dash")
 			elif event.position.x < _screen().x * 0.5 and _stick_finger == -1:
 				_stick_finger = event.index
 				_stick_origin = event.position
@@ -50,6 +59,9 @@ func _input(event: InputEvent) -> void:
 			if event.index == _jump_finger:
 				_jump_finger = -1
 				Input.action_release("jump")
+			if event.index == _dash_finger:
+				_dash_finger = -1
+				Input.action_release("dash")
 			if event.index == _stick_finger:
 				_stick_finger = -1
 				_apply_stick(Vector2.ZERO)
@@ -90,6 +102,12 @@ func _set_axis(neg: String, pos: String, value: float) -> void:
 
 
 func _draw() -> void:
+	var dc := _dash_center()
+	draw_circle(dc, DASH_RADIUS, CORAL if _dash_finger != -1 else CREAM)
+	draw_arc(dc, DASH_RADIUS, 0, TAU, 40, INK, 4.0, true)
+	var dash_font := get_theme_default_font()
+	var dash_width := dash_font.get_string_size("DASH", HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
+	draw_string(dash_font, dc + Vector2(-dash_width / 2, 8), "DASH", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, INK)
 	var jc := _jump_center()
 	var pressed := _jump_finger != -1
 	draw_circle(jc + Vector2(0, 6), JUMP_RADIUS, INK.lerp(CREAM, 0.5))

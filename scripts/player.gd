@@ -19,6 +19,8 @@ var knockback := Vector3.ZERO
 var _was_on_floor := false
 var _last_fall_speed := 0.0
 var _jump_buffer := 0.0
+var _dash_cooldown := 0.0
+var _last_direction := Vector2.DOWN
 var _visual
 
 
@@ -47,6 +49,12 @@ func _physics_process(delta: float) -> void:
 			input = bot_direction
 		else:
 			input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if input.length_squared() > 0.01:
+		_last_direction = input.normalized()
+	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
+	if not is_out and not is_bot and _dash_cooldown <= 0.0 and Input.is_action_just_pressed("dash"):
+		knockback += Vector3(_last_direction.x, 0, _last_direction.y) * Tuning.DASH_IMPULSE
+		_dash_cooldown = Tuning.DASH_COOLDOWN
 	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
 	velocity.x = move_toward(velocity.x, target.x, Tuning.MOVE_ACCEL * delta)
 	velocity.z = move_toward(velocity.z, target.z, Tuning.MOVE_ACCEL * delta)

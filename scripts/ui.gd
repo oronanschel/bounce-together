@@ -28,7 +28,7 @@ func _ready() -> void:
 
 	var help := Label.new()
 	_help = help
-	help.text = "WASD / arrows: move   Space: jump   R: restart"
+	help.text = "WASD / arrows: move   Space: jump   Shift: dash   R: restart"
 	help.add_theme_color_override("font_color", INK)
 	help.add_theme_font_size_override("font_size", 18)
 	help.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)

@@ -10,11 +10,18 @@ func check_round() -> void:
 	assert(game.players.size() == 7 and game._remaining() == 7)
 	assert(not game.players[0].is_bot and game.players[1].is_bot)
 	var a = game.players[0]
+	Input.action_press("dash")
+	await physics_frame
+	await physics_frame
+	Input.action_release("dash")
+	assert(a.knockback.length() > 0.0)
+	a.knockback = Vector3.ZERO
 	var b = game.players[1]
 	a.position = Vector3(0, 1, 0)
 	b.position = Vector3(1, 1, 0)
+	a.velocity = Vector3(6, 0, 0)
 	game._resolve_bumps()
-	assert(a.knockback.x < 0 and b.knockback.x > 0)
+	assert(a.knockback.x < 0 and b.knockback.x > 6.5)
 	var tuning = load("res://scripts/physics_tuning.gd")
 	a.position = Vector3(tuning.ARENA_RADIUS - 0.2, 0.2, 0)
 	a.knockback = Vector3.ZERO

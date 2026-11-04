@@ -39,6 +39,7 @@ func _setup_input() -> void:
 		"move_forward": [KEY_W, KEY_UP],
 		"move_back": [KEY_S, KEY_DOWN],
 		"jump": [KEY_SPACE],
+		"dash": [KEY_SHIFT],
 		"restart": [KEY_R],
 	}
 	for action in map:
@@ -220,9 +221,18 @@ func _resolve_bumps() -> void:
 			if horizontal.length() > Tuning.HIT_DISTANCE or abs(separation.y) > Tuning.HIT_VERTICAL_RANGE:
 				continue
 			var direction := horizontal.normalized() if horizontal.length() > 0.001 else Vector2.RIGHT
-			var impulse := Vector3(direction.x, 0, direction.y) * Tuning.HIT_IMPULSE
-			a.knockback -= impulse
-			b.knockback += impulse
+			var va := Vector2(a.velocity.x + a.knockback.x, a.velocity.z + a.knockback.z)
+			var vb := Vector2(b.velocity.x + b.knockback.x, b.velocity.z + b.knockback.z)
+			# Each bouncer's speed into the other adds to the push it delivers.
+			var a_strike := maxf(0.0, va.dot(direction)) * Tuning.HIT_SPEED_SCALE
+			a_strike += maxf(0.0, -a.velocity.y) * Tuning.HIT_FALL_SCALE
+			var b_strike := maxf(0.0, -vb.dot(direction)) * Tuning.HIT_SPEED_SCALE
+			b_strike += maxf(0.0, -b.velocity.y) * Tuning.HIT_FALL_SCALE
+			var to_b := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + a_strike)
+			var to_a := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + b_strike)
+			var axis := Vector3(direction.x, 0, direction.y)
+			a.knockback -= axis * to_a
+			b.knockback += axis * to_b
 			a.velocity.y = maxf(a.velocity.y, Tuning.HIT_LIFT)
 			b.velocity.y = maxf(b.velocity.y, Tuning.HIT_LIFT)
 			hit_cooldowns[key] = Tuning.HIT_COOLDOWN
