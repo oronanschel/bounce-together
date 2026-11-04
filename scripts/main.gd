@@ -83,6 +83,7 @@ func start_round() -> void:
 	round_over = false
 	var p := Player.new()
 	p.body_color = preload("res://scripts/character_visual.gd").PALETTE[0]
+	p.set_meta("display_name", preload("res://scripts/character_visual.gd").NAMES[0])
 	p.position = Vector3(0, 1.5, 0)
 	add_child(p)
 	p.landed.connect(_on_player_landed.bind(p))
@@ -116,6 +117,8 @@ func _physics_process(_delta: float) -> void:
 		if not p.is_out and p.global_position.y < OUT_HEIGHT:
 			p.is_out = true
 			hud.set_remaining(_remaining())
+			if _remaining() > 0:
+				hud.flash_out(p.get_meta("display_name", "Someone"), p.body_color)
 	if _remaining() == 0:
 		round_over = true
 		hud.show_game_over("You bounced out!")
