@@ -18,6 +18,12 @@ python3 -m http.server 8000 --directory build/web
 # open http://localhost:8000
 ```
 
+### Compact build for size-limited hosts
+
+`build/web-compact/` is the same game with the engine binary gzipped and split into parts under 8 MiB
+(~10 MB total). A small script in its `index.html` reassembles it in the browser. Regenerate after each export:
+`python3 tools/compact_web_build.py build/web build/web-compact`
+
 ### Open / export with Godot
 
 1. Install [Godot 4.7.2-stable](https://godotengine.org/download) (standard, not .NET).
