@@ -46,7 +46,7 @@ def main(src: str, dst: str) -> None:
         elif name != "index.wasm":
             shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
     raw = open(os.path.join(src, "index.wasm"), "rb").read()
-    packed = gzip.compress(raw, 9)
+    packed = gzip.compress(raw, 9, mtime=0)  # deterministic: same engine, same bytes
     count = 0
     for i in range(0, len(packed), PART_SIZE):
         with open(os.path.join(dst, "index.wasm.gz.part%d.wasm" % count), "wb") as f:
