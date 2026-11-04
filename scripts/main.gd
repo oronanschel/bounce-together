@@ -221,8 +221,8 @@ func _resolve_bumps() -> void:
 			if horizontal.length() > Tuning.HIT_DISTANCE or abs(separation.y) > Tuning.HIT_VERTICAL_RANGE:
 				continue
 			var direction := horizontal.normalized() if horizontal.length() > 0.001 else Vector2.RIGHT
-			var va := Vector2(a.velocity.x + a.knockback.x, a.velocity.z + a.knockback.z)
-			var vb := Vector2(b.velocity.x + b.knockback.x, b.velocity.z + b.knockback.z)
+			var va := Vector2(a.velocity.x, a.velocity.z)
+			var vb := Vector2(b.velocity.x, b.velocity.z)
 			# Each bouncer's speed into the other adds to the push it delivers.
 			var a_strike := maxf(0.0, va.dot(direction)) * Tuning.HIT_SPEED_SCALE
 			a_strike += maxf(0.0, -a.velocity.y) * Tuning.HIT_FALL_SCALE
@@ -231,8 +231,8 @@ func _resolve_bumps() -> void:
 			var to_b := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + a_strike)
 			var to_a := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + b_strike)
 			var axis := Vector3(direction.x, 0, direction.y)
-			a.knockback -= axis * to_a
-			b.knockback += axis * to_b
+			a.apply_impulse(-axis * to_a)
+			b.apply_impulse(axis * to_b)
 			a.velocity.y = maxf(a.velocity.y, Tuning.HIT_LIFT)
 			b.velocity.y = maxf(b.velocity.y, Tuning.HIT_LIFT)
 			hit_cooldowns[key] = Tuning.HIT_COOLDOWN
@@ -249,10 +249,10 @@ func _resolve_rim() -> void:
 		if p.global_position.y < 0.0 or p.global_position.y > Tuning.RIM_HEIGHT:
 			continue
 		var outward := radial.normalized()
-		var total_motion := Vector2(p.velocity.x + p.knockback.x, p.velocity.z + p.knockback.z)
+		var total_motion := Vector2(p.velocity.x, p.velocity.z)
 		var outward_speed := total_motion.dot(outward)
 		if outward_speed <= 0.0 or outward_speed >= Tuning.RIM_BREAK_SPEED:
 			continue
-		var correction := outward * (outward_speed + Tuning.RIM_REBOUND_SPEED)
-		p.knockback -= Vector3(correction.x, 0, correction.y)
+		var correction := outward * (outward_speed * (1.0 + Tuning.RIM_RESTITUTION))
+		p.apply_impulse(-Vector3(correction.x, 0, correction.y))
 		rim_cooldowns[p] = Tuning.RIM_COOLDOWN

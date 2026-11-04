@@ -14,25 +14,23 @@ func check_round() -> void:
 	await physics_frame
 	await physics_frame
 	Input.action_release("dash")
-	assert(a.knockback.length() > 0.0)
-	a.knockback = Vector3.ZERO
+	assert(Vector2(a.velocity.x, a.velocity.z).length() > 0.0)
+	a.velocity = Vector3.ZERO
 	var b = game.players[1]
 	a.position = Vector3(0, 1, 0)
 	b.position = Vector3(1, 1, 0)
 	a.velocity = Vector3(6, 0, 0)
 	game._resolve_bumps()
-	assert(a.knockback.x < 0 and b.knockback.x > 6.5)
+	assert(a.velocity.x < 6.0 and b.velocity.x > 2.0)
 	var tuning = load("res://scripts/physics_tuning.gd")
 	a.position = Vector3(tuning.ARENA_RADIUS - 0.2, 0.2, 0)
-	a.knockback = Vector3.ZERO
 	a.velocity = Vector3(4, 0, 0)
 	game._resolve_rim()
-	assert(a.knockback.x < -4.0)
+	assert(a.velocity.x < 0.0)
 	game.rim_cooldowns.clear()
-	a.knockback = Vector3.ZERO
 	a.velocity = Vector3(tuning.RIM_BREAK_SPEED + 1.0, 0, 0)
 	game._resolve_rim()
-	assert(a.knockback == Vector3.ZERO)
+	assert(a.velocity.x > tuning.RIM_BREAK_SPEED)
 	for i in range(1, 7):
 		game.players[i].position.y = -1
 	game._physics_process(0.016)

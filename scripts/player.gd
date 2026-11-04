@@ -14,7 +14,7 @@ var is_out := false
 var is_bot := false
 var bot_direction := Vector2.ZERO
 var bot_jump := false
-var knockback := Vector3.ZERO
+var _hit_control_time := 0.0
 
 var _was_on_floor := false
 var _last_fall_speed := 0.0
@@ -43,7 +43,7 @@ func _physics_process(delta: float) -> void:
 		var gravity := Tuning.RISE_GRAVITY
 		if velocity.y < 0.0:
 			gravity *= Tuning.FALL_GRAVITY_MULTIPLIER
-		velocity.y -= gravity * delta
+		velocity.y = maxf(-Tuning.TERMINAL_FALL_SPEED, velocity.y - gravity * delta)
 		_last_fall_speed = max(_last_fall_speed, -velocity.y)
 
 	var input := Vector2.ZERO
@@ -56,10 +56,15 @@ func _physics_process(delta: float) -> void:
 		_last_direction = input.normalized()
 	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
 	if not is_out and not is_bot and _dash_cooldown <= 0.0 and Input.is_action_just_pressed("dash"):
-		knockback += Vector3(_last_direction.x, 0, _last_direction.y) * Tuning.DASH_IMPULSE
+		apply_impulse(Vector3(_last_direction.x, 0, _last_direction.y) * Tuning.DASH_IMPULSE)
 		_dash_cooldown = Tuning.DASH_COOLDOWN
 	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
+	_hit_control_time = maxf(0.0, _hit_control_time - delta)
 	var acceleration := Tuning.GROUND_ACCEL if is_on_floor() else Tuning.AIR_ACCEL
+	if is_on_floor() and input.length_squared() < 0.01:
+		acceleration = Tuning.GROUND_DECEL
+	if _hit_control_time > 0.0:
+		acceleration *= Tuning.HIT_CONTROL_FACTOR
 	velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
 	velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
 
@@ -71,14 +76,7 @@ func _physics_process(delta: float) -> void:
 		_jump_buffer = 0.0
 		launched.emit(velocity.y, false)
 
-	# External impulses persist separately from steering so a hit can carry a
-	# bouncer off the edge instead of being immediately cancelled by input.
-	velocity.x += knockback.x
-	velocity.z += knockback.z
 	move_and_slide()
-	velocity.x -= knockback.x
-	velocity.z -= knockback.z
-	knockback = knockback.move_toward(Vector3.ZERO, Tuning.KNOCKBACK_DRAG * delta)
 
 	if is_on_floor() and not _was_on_floor:
 		var impact := _last_fall_speed
@@ -89,13 +87,19 @@ func _physics_process(delta: float) -> void:
 			velocity.y = maxf(Tuning.MIN_BOUNCE_VELOCITY, impact * Tuning.BOUNCE_RATIO)
 			var timed := _jump_buffer > 0.0
 			if timed:
-				velocity.y = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, maxf(velocity.y, impact) + Tuning.TIMED_BOUNCE_BONUS)
+				velocity.y = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, velocity.y + Tuning.TIMED_BOUNCE_BONUS)
 				_jump_buffer = 0.0
 			launched.emit(velocity.y, timed)
 	_was_on_floor = is_on_floor()
 
 	_visual.face(input, delta)
 	_visual.set_motion(Vector2(velocity.x, velocity.z).length(), velocity.y, _ground_y())
+
+
+## Impulses become velocity so steering can counter them instead of fighting wind.
+func apply_impulse(impulse: Vector3) -> void:
+	velocity += impulse
+	_hit_control_time = Tuning.HIT_CONTROL_SECONDS
 
 
 ## Height of whatever is below us (for the blob shadow).
