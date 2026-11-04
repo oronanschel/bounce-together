@@ -43,5 +43,17 @@ func check_feel() -> void:
 	for i in 30:
 		await physics_frame
 	assert(absf(p.velocity.x) < 0.5, "Player kept sliding after release")
-	print("FEEL CHECK PASSED: rebound height=%.2f; rim hold and stop passed" % (apex - low_y))
+	game.start_round()
+	p = game.players[0]
+	for i in range(1, game.players.size()):
+		game.players[i].set_physics_process(false)
+		game.players[i].position = Vector3(30 + i * 2, 1, 0)
+	p.position = Vector3(10, 1, 0)
+	p.velocity = Vector3.ZERO
+	for i in 120:
+		await physics_frame
+		if p.is_out:
+			break
+	assert(p.is_out and game._remaining() == 6, "A bouncer falling beyond the arena was not eliminated")
+	print("FEEL CHECK PASSED: rebound height=%.2f; rim, stop and outside fall passed" % (apex - low_y))
 	quit()

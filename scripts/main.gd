@@ -225,10 +225,11 @@ func _resolve_bumps() -> void:
 			var direction := horizontal.normalized() if horizontal.length() > 0.001 else Vector2.RIGHT
 			var va := Vector2(a.impact_velocity.x, a.impact_velocity.z)
 			var vb := Vector2(b.impact_velocity.x, b.impact_velocity.z)
-			# Each bouncer's speed into the other adds to the push it delivers.
-			var a_strike := maxf(0.0, va.dot(direction)) * Tuning.HIT_SPEED_SCALE
+			# Closing speed reflects both bodies approaching, not just one side.
+			var closing_speed := maxf(0.0, (va - vb).dot(direction))
+			var a_strike := closing_speed * Tuning.HIT_SPEED_SCALE
 			a_strike += maxf(0.0, -a.impact_velocity.y) * Tuning.HIT_FALL_SCALE
-			var b_strike := maxf(0.0, -vb.dot(direction)) * Tuning.HIT_SPEED_SCALE
+			var b_strike := closing_speed * Tuning.HIT_SPEED_SCALE
 			b_strike += maxf(0.0, -b.impact_velocity.y) * Tuning.HIT_FALL_SCALE
 			var to_b := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + a_strike)
 			var to_a := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + b_strike)
