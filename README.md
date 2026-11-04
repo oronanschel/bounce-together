@@ -35,7 +35,7 @@ python3 -m http.server 8000 --directory build/web
 
 ### Gameplay smoke check
 
-Run `godot --headless --path . --script res://tests/round_smoke.gd` to check rounds, and `godot --headless --path . --script res://tests/bounce_smoke.gd` to check automatic and timed rebounds. Gameplay values live in `scripts/physics_tuning.gd` and are provisional until playtesting.
+Run `godot --headless --path . --script res://tests/round_smoke.gd` to check rounds, and `godot --headless --path . --script res://tests/bounce_smoke.gd` to check automatic and timed rebounds. Run `godot --headless --fixed-fps 60 --path . --script res://tests/feel_smoke.gd` to check passive rebound height and sustained rim pressure. Gameplay values live in `scripts/physics_tuning.gd` and are provisional until playtesting.
 
 ### Layout
 

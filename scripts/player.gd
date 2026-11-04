@@ -14,6 +14,7 @@ var is_out := false
 var is_bot := false
 var bot_direction := Vector2.ZERO
 var bot_jump := false
+var impact_velocity := Vector3.ZERO
 var _hit_control_time := 0.0
 
 var _was_on_floor := false
@@ -55,9 +56,8 @@ func _physics_process(delta: float) -> void:
 	if input.length_squared() > 0.01:
 		_last_direction = input.normalized()
 	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
-	if not is_out and not is_bot and _dash_cooldown <= 0.0 and Input.is_action_just_pressed("dash"):
-		apply_impulse(Vector3(_last_direction.x, 0, _last_direction.y) * Tuning.DASH_IMPULSE)
-		_dash_cooldown = Tuning.DASH_COOLDOWN
+	if not is_out and not is_bot and Input.is_action_just_pressed("dash"):
+		try_dash(_last_direction)
 	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
 	_hit_control_time = maxf(0.0, _hit_control_time - delta)
 	var acceleration := Tuning.GROUND_ACCEL if is_on_floor() else Tuning.AIR_ACCEL
@@ -76,6 +76,7 @@ func _physics_process(delta: float) -> void:
 		_jump_buffer = 0.0
 		launched.emit(velocity.y, false)
 
+	impact_velocity = velocity
 	move_and_slide()
 
 	if is_on_floor() and not _was_on_floor:
@@ -94,6 +95,15 @@ func _physics_process(delta: float) -> void:
 
 	_visual.face(input, delta)
 	_visual.set_motion(Vector2(velocity.x, velocity.z).length(), velocity.y, _ground_y())
+
+
+## The same dash and cooldown apply to both player and computer opponents.
+func try_dash(direction: Vector2) -> void:
+	if is_out or _dash_cooldown > 0.0 or direction.length_squared() < 0.01:
+		return
+	var dash_dir := direction.normalized()
+	apply_impulse(Vector3(dash_dir.x, 0, dash_dir.y) * Tuning.DASH_IMPULSE)
+	_dash_cooldown = Tuning.DASH_COOLDOWN
 
 
 ## Impulses become velocity so steering can counter them instead of fighting wind.

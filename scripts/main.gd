@@ -202,6 +202,8 @@ func _update_bots() -> void:
 			steering -= radial.normalized() * Tuning.BOT_EDGE_STEER
 		bot.bot_direction = steering.normalized()
 		bot.bot_jump = nearest_distance < Tuning.BOT_JUMP_DISTANCE_SQUARED and randf() < Tuning.BOT_JUMP_CHANCE
+		if nearest_distance < Tuning.BOT_DASH_DISTANCE_SQUARED and randf() < Tuning.BOT_DASH_CHANCE:
+			bot.try_dash(bot.bot_direction)
 
 
 func _resolve_bumps() -> void:
@@ -221,13 +223,13 @@ func _resolve_bumps() -> void:
 			if horizontal.length() > Tuning.HIT_DISTANCE or abs(separation.y) > Tuning.HIT_VERTICAL_RANGE:
 				continue
 			var direction := horizontal.normalized() if horizontal.length() > 0.001 else Vector2.RIGHT
-			var va := Vector2(a.velocity.x, a.velocity.z)
-			var vb := Vector2(b.velocity.x, b.velocity.z)
+			var va := Vector2(a.impact_velocity.x, a.impact_velocity.z)
+			var vb := Vector2(b.impact_velocity.x, b.impact_velocity.z)
 			# Each bouncer's speed into the other adds to the push it delivers.
 			var a_strike := maxf(0.0, va.dot(direction)) * Tuning.HIT_SPEED_SCALE
-			a_strike += maxf(0.0, -a.velocity.y) * Tuning.HIT_FALL_SCALE
+			a_strike += maxf(0.0, -a.impact_velocity.y) * Tuning.HIT_FALL_SCALE
 			var b_strike := maxf(0.0, -vb.dot(direction)) * Tuning.HIT_SPEED_SCALE
-			b_strike += maxf(0.0, -b.velocity.y) * Tuning.HIT_FALL_SCALE
+			b_strike += maxf(0.0, -b.impact_velocity.y) * Tuning.HIT_FALL_SCALE
 			var to_b := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + a_strike)
 			var to_a := minf(Tuning.HIT_MAX_IMPULSE, Tuning.HIT_IMPULSE + b_strike)
 			var axis := Vector3(direction.x, 0, direction.y)

@@ -20,6 +20,7 @@ func check_round() -> void:
 	a.position = Vector3(0, 1, 0)
 	b.position = Vector3(1, 1, 0)
 	a.velocity = Vector3(6, 0, 0)
+	a.impact_velocity = a.velocity
 	game._resolve_bumps()
 	assert(a.velocity.x < 6.0 and b.velocity.x > 2.0)
 	var tuning = load("res://scripts/physics_tuning.gd")
