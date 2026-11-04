@@ -38,3 +38,19 @@ static func landing_puff(parent: Node, pos: Vector3, impact: float) -> void:
 	p.global_position = pos + Vector3(0, 0.1, 0)
 	p.emitting = true
 	p.finished.connect(p.queue_free)
+
+
+## Hitstop: freeze the action for a few frames on a big hit so it lands with weight.
+## duration is in real seconds (typical 0.04–0.1). Overlapping calls don't stack.
+static var _hitstop_active := false
+
+
+static func hitstop(node: Node, duration: float = 0.06) -> void:
+	if _hitstop_active or duration <= 0.0:
+		return
+	_hitstop_active = true
+	Engine.time_scale = 0.05
+	# process_always + ignore_time_scale so the timer runs in real time.
+	await node.get_tree().create_timer(duration, true, false, true).timeout
+	Engine.time_scale = 1.0
+	_hitstop_active = false
