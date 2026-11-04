@@ -76,8 +76,8 @@ game, it says "ours".
 | Cushion sink depth | 0.03 × impact speed, clamp 0.12–0.40 u | visual and collision give |
 | Cushion sink time / rebound time | 0.10 s / 0.12 s | spring with heavy damping |
 | Passive rebound | `BOUNCE_RATIO` **0.5** of impact speed, none below impact 4 | height ≈ 25% of the drop |
-| Timed-bounce boost | +4.5 u/s on top of the rebound, cap 15 | `TIMED_BOUNCE_BONUS`, `MAX_TIMED_BOUNCE_VELOCITY` |
-| Timed chain ceiling | v → 0.5·v + 4.5 converges to 9 | about 1.6 u of apex at g=25; a good chain, not infinite |
+| Timed-bounce boost | +7 u/s on top of the rebound, cap 15 | `TIMED_BOUNCE_BONUS`, `MAX_TIMED_BOUNCE_VELOCITY` |
+| Timed chain ceiling | v → 0.5·v + 7 converges to 14 | apex ≈ 14²/(2·25) ≈ 3.9 u, nearly twice a plain jump; first timed bounce from a jump-height drop (≈10) gives 12; reaches the ceiling in about 4 bounces |
 | Bump knockback | `0.55 × closing speed + 0.2 × fall speed`, clamp 15 | `HIT_SPEED_SCALE`, `HIT_FALL_SCALE`, `HIT_MAX_IMPULSE` |
 | Knockback decay | fold into velocity; drag so it fades in **≈0.5 s** | if kept separate, `KNOCKBACK_DRAG` ≈ 12 |
 | Control after a hit | accel ×0.3 for 0.2 s, full control by 0.6 s | |
