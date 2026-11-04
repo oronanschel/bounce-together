@@ -32,6 +32,11 @@ func check_round() -> void:
 	a.velocity = Vector3(tuning.RIM_BREAK_SPEED + 1.0, 0, 0)
 	game._resolve_rim()
 	assert(a.velocity.x > tuning.RIM_BREAK_SPEED)
+	a.position.y = -1
+	game._physics_process(0.016)
+	assert(a.is_out and game.hud._spectating.visible and game.hud._touch.restart_enabled)
+	game.start_round()
+	assert(not game.hud._spectating.visible and not game.hud._touch.restart_enabled)
 	for i in range(1, 7):
 		game.players[i].position.y = -1
 	game._physics_process(0.016)

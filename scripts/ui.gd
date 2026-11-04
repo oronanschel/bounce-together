@@ -9,6 +9,7 @@ var _center: Label
 var _card: PanelContainer
 var _toast: Label
 var _help: Label
+var _spectating: Label
 var _touch
 
 
@@ -35,6 +36,20 @@ func _ready() -> void:
 	help.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	help.position.y -= 40
 	add_child(help)
+
+	_spectating = Label.new()
+	_spectating.add_theme_color_override("font_color", INK)
+	_spectating.add_theme_color_override("font_outline_color", CREAM)
+	_spectating.add_theme_constant_override("outline_size", 6)
+	_spectating.add_theme_font_size_override("font_size", 24)
+	_spectating.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_spectating.anchor_left = 0.5
+	_spectating.anchor_right = 0.5
+	_spectating.offset_left = -300
+	_spectating.offset_right = 300
+	_spectating.offset_top = 175
+	_spectating.visible = false
+	add_child(_spectating)
 
 	_center = Label.new()
 	_center.add_theme_color_override("font_color", INK)
@@ -108,6 +123,12 @@ func show_playing(n: int) -> void:
 	_card.visible = false
 	_toast.modulate.a = 0.0
 	_touch.restart_enabled = false
+	_spectating.visible = false
+
+
+func show_spectating() -> void:
+	_spectating.visible = true
+	_touch.restart_enabled = true
 
 
 func _restart_hint() -> String:
@@ -116,9 +137,12 @@ func _restart_hint() -> String:
 
 func _process(_delta: float) -> void:
 	_help.visible = not _touch.visible
+	if _spectating.visible:
+		_spectating.text = "You're out — " + _restart_hint()
 
 
 func show_game_over(message: String) -> void:
+	_spectating.visible = false
 	_center.remove_theme_color_override("font_color")
 	_center.add_theme_color_override("font_color", INK)
 	_center.text = message + "\n" + _restart_hint()
@@ -128,6 +152,7 @@ func show_game_over(message: String) -> void:
 
 ## Winner overlay for gameplay to call when one bouncer is left.
 func show_win(winner_name: String, winner_color: Color = INK) -> void:
+	_spectating.visible = false
 	_center.add_theme_color_override("font_color", winner_color.darkened(0.25))
 	_center.text = "%s wins!\n%s" % [winner_name, _restart_hint()]
 	_pop_card()

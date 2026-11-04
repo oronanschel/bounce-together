@@ -174,6 +174,8 @@ func _physics_process(delta: float) -> void:
 						hud.show_game_over("You win!")
 					break
 	else:
+		if newly_out.has(players[0]):
+			hud.show_spectating()
 		var p = newly_out.back()
 		hud.flash_out(p.get_meta("display_name", "Someone"), p.body_color)
 
