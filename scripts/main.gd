@@ -18,6 +18,7 @@ var round_over := false
 var hit_cooldowns := {}
 var rim_cooldowns := {}
 var bot_think_time := 0.0
+var _restart_requested := false
 
 
 func _ready() -> void:
@@ -129,8 +130,14 @@ func _remaining() -> int:
 	return n
 
 
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("restart") and not event.is_echo():
+		_restart_requested = true
+
+
 func _physics_process(delta: float) -> void:
-	if Input.is_action_just_pressed("restart"):
+	if _restart_requested:
+		_restart_requested = false
 		start_round()
 		return
 	if round_over:

@@ -9,7 +9,23 @@ func check_round() -> void:
 	await physics_frame
 	assert(game.players.size() == 7 and game._remaining() == 7)
 	assert(not game.players[0].is_bot and game.players[1].is_bot)
+	var original = game.players[0]
+	var tap := InputEventAction.new()
+	tap.action = "restart"
+	tap.pressed = true
+	game._input(tap)
+	tap.pressed = false
+	game._input(tap)
+	game._physics_process(1.0 / 60.0)
+	assert(game.players[0] != original, "A short restart tap was lost")
 	var a = game.players[0]
+	var jump_tap := InputEventAction.new()
+	jump_tap.action = "jump"
+	jump_tap.pressed = true
+	a._input(jump_tap)
+	jump_tap.pressed = false
+	a._input(jump_tap)
+	assert(a._jump_buffer > 0.0, "A short jump tap was lost")
 	Input.action_press("dash")
 	await physics_frame
 	await physics_frame

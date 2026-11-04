@@ -20,6 +20,7 @@ var _hit_control_time := 0.0
 var _was_on_floor := false
 var _last_fall_speed := 0.0
 var _jump_buffer := 0.0
+var _dash_requested := false
 var _dash_cooldown := 0.0
 var _last_direction := Vector2.DOWN
 var _visual
@@ -39,6 +40,15 @@ func _ready() -> void:
 	add_child(_visual)
 
 
+func _input(event: InputEvent) -> void:
+	if is_bot or is_out or event.is_echo():
+		return
+	if event.is_action_pressed("jump"):
+		_jump_buffer = Tuning.JUMP_BUFFER_SECONDS
+	if event.is_action_pressed("dash"):
+		_dash_requested = true
+
+
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		var gravity := Tuning.RISE_GRAVITY
@@ -56,8 +66,9 @@ func _physics_process(delta: float) -> void:
 	if input.length_squared() > 0.01:
 		_last_direction = input.normalized()
 	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
-	if not is_out and not is_bot and Input.is_action_just_pressed("dash"):
+	if not is_out and not is_bot and (_dash_requested or Input.is_action_just_pressed("dash")):
 		try_dash(_last_direction)
+	_dash_requested = false
 	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
 	_hit_control_time = maxf(0.0, _hit_control_time - delta)
 	var acceleration := Tuning.GROUND_ACCEL if is_on_floor() else Tuning.AIR_ACCEL

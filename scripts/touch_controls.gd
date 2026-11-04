@@ -44,10 +44,10 @@ func _input(event: InputEvent) -> void:
 		if event.pressed:
 			if event.position.distance_to(_jump_center()) < JUMP_RADIUS * 1.4:
 				_jump_finger = event.index
-				Input.action_press("jump")
+				_button_action("jump", true)
 			elif event.position.distance_to(_dash_center()) < DASH_RADIUS * 1.25:
 				_dash_finger = event.index
-				Input.action_press("dash")
+				_button_action("dash", true)
 			elif event.position.x < _screen().x * 0.5 and _stick_finger == -1:
 				_stick_finger = event.index
 				_stick_origin = event.position
@@ -58,10 +58,10 @@ func _input(event: InputEvent) -> void:
 		else:
 			if event.index == _jump_finger:
 				_jump_finger = -1
-				Input.action_release("jump")
+				_button_action("jump", false)
 			if event.index == _dash_finger:
 				_dash_finger = -1
-				Input.action_release("dash")
+				_button_action("dash", false)
 			if event.index == _stick_finger:
 				_stick_finger = -1
 				_apply_stick(Vector2.ZERO)
@@ -71,6 +71,13 @@ func _input(event: InputEvent) -> void:
 		var v: Vector2 = (_stick_pos - _stick_origin) / STICK_RADIUS
 		_apply_stick(v.limit_length(1.0))
 		queue_redraw()
+
+
+func _button_action(action: String, pressed: bool) -> void:
+	var event := InputEventAction.new()
+	event.action = action
+	event.pressed = pressed
+	Input.parse_input_event(event)
 
 
 func _tap_restart() -> void:
