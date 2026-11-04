@@ -24,7 +24,7 @@ func check_bounces() -> void:
 	p.position = Vector3(0, 0.5, 0)
 	p.velocity = Vector3(0, -6, 0)
 	var normal := await _wait_for_rebound(p)
-	assert(normal >= Tuning.MIN_BOUNCE_VELOCITY - 0.01)
+	assert(normal > 0.0)
 	# Fresh bouncer state so prior floor contacts cannot affect the timing check.
 	game.start_round()
 	p = game.players[0]

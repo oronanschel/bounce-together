@@ -20,6 +20,11 @@ var _hit_control_time := 0.0
 var _was_on_floor := false
 var _last_fall_speed := 0.0
 var _jump_buffer := 0.0
+var _cushion_active := false
+var _cushion_elapsed := 0.0
+var _cushion_depth := 0.0
+var _cushion_rebound := 0.0
+var _cushion_timed := false
 var _dash_requested := false
 var _dash_cooldown := 0.0
 var _last_direction := Vector2.DOWN
@@ -76,13 +81,30 @@ func _physics_process(delta: float) -> void:
 		acceleration = Tuning.GROUND_DECEL
 	if _hit_control_time > 0.0:
 		acceleration *= Tuning.HIT_CONTROL_FACTOR
+	if _cushion_active:
+		acceleration *= Tuning.CUSHION_ACCEL_FACTOR
 	velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
 	velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
 
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	if not is_out and (bot_jump if is_bot else Input.is_action_just_pressed("jump")):
 		_jump_buffer = Tuning.JUMP_BUFFER_SECONDS
-	if is_on_floor() and not is_out and _was_on_floor and _jump_buffer > 0.0:
+	if _cushion_active:
+		if _jump_buffer > 0.0 and not _cushion_timed:
+			_cushion_rebound = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, _cushion_rebound + Tuning.TIMED_BOUNCE_BONUS)
+			_cushion_timed = true
+			_jump_buffer = 0.0
+		_cushion_elapsed += delta
+		var phase := minf(_cushion_elapsed / Tuning.CUSHION_DURATION, 1.0)
+		_visual.position.y = -_cushion_depth * sin(PI * phase)
+		velocity.y = 0.0
+		if phase >= 1.0:
+			_cushion_active = false
+			_visual.position.y = 0.0
+			velocity.y = _cushion_rebound
+			if velocity.y > 0.0:
+				launched.emit(velocity.y, _cushion_timed)
+	if is_on_floor() and not is_out and not _cushion_active and _was_on_floor and _jump_buffer > 0.0:
 		velocity.y = Tuning.JUMP_VELOCITY
 		_jump_buffer = 0.0
 		launched.emit(velocity.y, false)
@@ -96,12 +118,15 @@ func _physics_process(delta: float) -> void:
 		_visual.land(impact)
 		landed.emit(impact)
 		if not is_out:
-			velocity.y = maxf(Tuning.MIN_BOUNCE_VELOCITY, impact * Tuning.BOUNCE_RATIO)
-			var timed := _jump_buffer > 0.0
-			if timed:
-				velocity.y = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, velocity.y + Tuning.TIMED_BOUNCE_BONUS)
+			_cushion_active = true
+			_cushion_elapsed = 0.0
+			_cushion_depth = clampf(impact * Tuning.CUSHION_DEPTH_PER_SPEED, Tuning.CUSHION_MIN_DEPTH, Tuning.CUSHION_MAX_DEPTH)
+			_cushion_rebound = impact * Tuning.BOUNCE_RATIO if impact >= Tuning.MIN_BOUNCE_IMPACT else 0.0
+			_cushion_timed = _jump_buffer > 0.0
+			if _cushion_timed:
+				_cushion_rebound = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, _cushion_rebound + Tuning.TIMED_BOUNCE_BONUS)
 				_jump_buffer = 0.0
-			launched.emit(velocity.y, timed)
+			velocity.y = 0.0
 	_was_on_floor = is_on_floor()
 
 	_visual.face(input, delta)

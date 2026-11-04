@@ -266,6 +266,6 @@ func _resolve_rim() -> void:
 		var outward_speed := total_motion.dot(outward)
 		if outward_speed <= 0.0 or outward_speed >= Tuning.RIM_BREAK_SPEED:
 			continue
-		var correction := outward * (outward_speed * (1.0 + Tuning.RIM_RESTITUTION))
+		var correction := outward * (outward_speed + minf(outward_speed * Tuning.RIM_RESTITUTION, Tuning.RIM_MAX_REBOUND_SPEED))
 		p.apply_impulse(-Vector3(correction.x, 0, correction.y))
 		rim_cooldowns[p] = Tuning.RIM_COOLDOWN
