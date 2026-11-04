@@ -4,6 +4,7 @@ extends CharacterBody3D
 ## hard landings bounce you back up a little.
 
 signal landed(impact: float)
+signal jumped
 
 const CharacterVisual := preload("res://scripts/character_visual.gd")
 
@@ -49,6 +50,7 @@ func _physics_process(delta: float) -> void:
 
 	if is_on_floor() and not is_out and Input.is_action_just_pressed("jump"):
 		velocity.y = JUMP_VELOCITY
+		jumped.emit()
 
 	move_and_slide()
 
