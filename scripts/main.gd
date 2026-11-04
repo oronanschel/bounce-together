@@ -181,6 +181,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_bots() -> void:
+	var duel := _remaining() == 2
 	for bot in players:
 		if not bot.is_bot or bot.is_out:
 			continue
@@ -203,7 +204,7 @@ func _update_bots() -> void:
 		if radial.length() > Tuning.ARENA_RADIUS - Tuning.BOT_EDGE_MARGIN:
 			steering -= radial.normalized() * Tuning.BOT_EDGE_STEER
 		bot.bot_direction = steering.normalized()
-		bot.bot_jump = nearest_distance < Tuning.BOT_JUMP_DISTANCE_SQUARED and randf() < Tuning.BOT_JUMP_CHANCE
+		bot.bot_jump = not duel and nearest_distance < Tuning.BOT_JUMP_DISTANCE_SQUARED and randf() < Tuning.BOT_JUMP_CHANCE
 		if nearest_distance < Tuning.BOT_DASH_DISTANCE_SQUARED and randf() < Tuning.BOT_DASH_CHANCE:
 			bot.try_dash(bot.bot_direction)
 

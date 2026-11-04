@@ -43,6 +43,11 @@ func check_round() -> void:
 	assert(game._remaining() == 1 and game.round_over)
 	game.start_round()
 	assert(game.players.size() == 7 and game._remaining() == 7 and not game.round_over)
+	for i in range(5):
+		game.players[i].is_out = true
+	game._update_bots()
+	assert(not game.players[5].bot_jump and not game.players[6].bot_jump)
+	game.start_round()
 	for p in game.players:
 		p.position.y = -1
 	game._physics_process(0.016)
