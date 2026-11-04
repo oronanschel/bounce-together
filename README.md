@@ -40,7 +40,7 @@ python3 -m http.server 8000 --directory build/web
 | `scripts/main.gd` | round manager: spawn, out check, restart | gameplay (ring-builder) |
 | `scripts/player.gd` | placeholder bouncer: movement, jump, squash & stretch | gameplay + look |
 | `scripts/arena.gd` | floor, rim, room | physics + look |
-| `scripts/ui.gd`, `shaders/` | HUD and materials | look & feel (bounce-artist) |
+| `scripts/ui.gd`, `scripts/room.gd`, `scripts/fx.gd`, `shaders/` | HUD, room, effects, materials | look & feel (bounce-artist) |
 | `docs/reference/` | visual reference (concept art, not gameplay) | — |
 
 See [ASSETS.md](ASSETS.md) for asset sources and licenses.

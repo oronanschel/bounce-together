@@ -7,13 +7,37 @@ var radius := 8.0
 const TEAL := Color("3fc1b0")
 const CORAL := Color("f2766b")
 const CREAM := Color("fbecd3")
-const ROOM_FLOOR := Color("f3cdb9")
+const ROOM_FLOOR := Color("e9b9a0")
+
+
+const MAX_DENTS := 8
+
+var _floor_mat: ShaderMaterial
+var _dents: Array[Vector4] = []
+var _next_dent := 0
 
 
 func _ready() -> void:
+	for i in MAX_DENTS:
+		_dents.append(Vector4(0, 0, 0, 0))
 	_build_floor()
 	_build_rim()
 	_build_room_floor()
+	add_child(preload("res://scripts/room.gd").new())
+
+
+## Press a soft dent into the quilted floor where someone landed (fades out).
+func add_dent(world_pos: Vector3, strength: float) -> void:
+	_dents[_next_dent] = Vector4(world_pos.x, world_pos.y, world_pos.z, clamp(strength, 0.0, 1.0))
+	_next_dent = (_next_dent + 1) % MAX_DENTS
+
+
+func _process(delta: float) -> void:
+	for i in MAX_DENTS:
+		var d := _dents[i]
+		d.w = move_toward(d.w, 0.0, delta * 1.5)
+		_dents[i] = d
+	_floor_mat.set_shader_parameter("dents", _dents)
 
 
 func _mat(color: Color, rough := 0.85) -> StandardMaterial3D:
@@ -39,8 +63,21 @@ func _build_floor() -> void:
 	cm.height = 1.0
 	cm.radial_segments = 64
 	mesh.mesh = cm
-	mesh.material_override = _mat(TEAL)
+	mesh.material_override = _mat(TEAL.darkened(0.15))
 	body.add_child(mesh)
+	# Quilted top surface as a thin disc so the shader only covers the top.
+	var top := MeshInstance3D.new()
+	var tm := CylinderMesh.new()
+	tm.top_radius = radius - 0.05
+	tm.bottom_radius = radius - 0.05
+	tm.height = 0.02
+	tm.radial_segments = 64
+	top.mesh = tm
+	_floor_mat = ShaderMaterial.new()
+	_floor_mat.shader = preload("res://shaders/quilted_floor.gdshader")
+	top.material_override = _floor_mat
+	top.position.y = 0.5
+	body.add_child(top)
 	body.position.y = -0.5
 	add_child(body)
 
