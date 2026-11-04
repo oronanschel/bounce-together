@@ -8,3 +8,4 @@
 | UI font | Godot's built-in default font | Bundled with Godot (MIT / OFL as shipped by Godot) |
 | `docs/reference/soft-play-concept.png` | AI-generated concept art supplied by the project owner | Reference only — not shipped in the game build |
 | Godot Engine runtime in `build/web/` | https://godotengine.org | MIT (see https://godotengine.org/license) |
+| Sound effects (`scripts/sfx.gd`: jump, land, out, win) | Synthesized in code at startup from sine waves; no audio files | Project's own work |

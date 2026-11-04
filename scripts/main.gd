@@ -7,6 +7,7 @@ const Arena := preload("res://scripts/arena.gd")
 const Player := preload("res://scripts/player.gd")
 const Hud := preload("res://scripts/ui.gd")
 const Fx := preload("res://scripts/fx.gd")
+const Sfx := preload("res://scripts/sfx.gd")
 
 const ARENA_RADIUS := 8.0
 const OUT_HEIGHT := -0.8  # below the arena top (y = 0) means you fell off
@@ -87,6 +88,7 @@ func start_round() -> void:
 	p.position = Vector3(0, 1.5, 0)
 	add_child(p)
 	p.landed.connect(_on_player_landed.bind(p))
+	p.jumped.connect(Sfx.play.bind(self, "jump", 0.6))
 	players.append(p)
 	hud.show_playing(_remaining())
 
@@ -95,6 +97,7 @@ func _on_player_landed(impact: float, p: Node3D) -> void:
 	if impact < 2.0:
 		return
 	Fx.landing_puff(self, p.global_position, impact)
+	Sfx.play(self, "land", clampf(impact / 14.0, 0.2, 1.0))
 	if p.global_position.y > -0.2:
 		arena.add_dent(p.global_position, impact / 12.0)
 
@@ -116,6 +119,7 @@ func _physics_process(_delta: float) -> void:
 	for p in players:
 		if not p.is_out and p.global_position.y < OUT_HEIGHT:
 			p.is_out = true
+			Sfx.play(self, "out")
 			hud.set_remaining(_remaining())
 			if _remaining() > 0:
 				hud.flash_out(p.get_meta("display_name", "Someone"), p.body_color)
