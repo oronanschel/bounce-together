@@ -4,8 +4,10 @@ extends CharacterBody3D
 ## hard landings bounce you back up a little.
 
 signal landed(impact: float)
+signal launched(speed: float, timed: bool)
 
 const CharacterVisual := preload("res://scripts/character_visual.gd")
+const Tuning := preload("res://scripts/physics_tuning.gd")
 
 var body_color := Color("8f5bd8")
 var is_out := false
@@ -14,15 +16,9 @@ var bot_direction := Vector2.ZERO
 var bot_jump := false
 var knockback := Vector3.ZERO
 
-const SPEED := 6.0
-const ACCEL := 30.0
-const JUMP_VELOCITY := 9.0
-const GRAVITY := 22.0
-const BOUNCE := 0.58
-const KNOCKBACK_DRAG := 2.0
-
 var _was_on_floor := false
 var _last_fall_speed := 0.0
+var _jump_buffer := 0.0
 var _visual
 
 
@@ -42,7 +38,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
-		velocity.y -= GRAVITY * delta
+		velocity.y -= Tuning.GRAVITY * delta
 		_last_fall_speed = max(_last_fall_speed, -velocity.y)
 
 	var input := Vector2.ZERO
@@ -51,12 +47,17 @@ func _physics_process(delta: float) -> void:
 			input = bot_direction
 		else:
 			input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var target := Vector3(input.x, 0, input.y) * SPEED
-	velocity.x = move_toward(velocity.x, target.x, ACCEL * delta)
-	velocity.z = move_toward(velocity.z, target.z, ACCEL * delta)
+	var target := Vector3(input.x, 0, input.y) * Tuning.MOVE_SPEED
+	velocity.x = move_toward(velocity.x, target.x, Tuning.MOVE_ACCEL * delta)
+	velocity.z = move_toward(velocity.z, target.z, Tuning.MOVE_ACCEL * delta)
 
-	if is_on_floor() and not is_out and (bot_jump if is_bot else Input.is_action_just_pressed("jump")):
-		velocity.y = JUMP_VELOCITY
+	_jump_buffer = maxf(0.0, _jump_buffer - delta)
+	if not is_out and (bot_jump if is_bot else Input.is_action_just_pressed("jump")):
+		_jump_buffer = Tuning.JUMP_BUFFER_SECONDS
+	if is_on_floor() and not is_out and _was_on_floor and _jump_buffer > 0.0:
+		velocity.y = Tuning.JUMP_VELOCITY
+		_jump_buffer = 0.0
+		launched.emit(velocity.y, false)
 
 	# External impulses persist separately from steering so a hit can carry a
 	# bouncer off the edge instead of being immediately cancelled by input.
@@ -65,15 +66,20 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	velocity.x -= knockback.x
 	velocity.z -= knockback.z
-	knockback = knockback.move_toward(Vector3.ZERO, KNOCKBACK_DRAG * delta)
+	knockback = knockback.move_toward(Vector3.ZERO, Tuning.KNOCKBACK_DRAG * delta)
 
 	if is_on_floor() and not _was_on_floor:
 		var impact := _last_fall_speed
 		_last_fall_speed = 0.0
 		_visual.land(impact)
 		landed.emit(impact)
-		if impact > 4.0 and not is_out:
-			velocity.y = impact * BOUNCE
+		if not is_out:
+			velocity.y = maxf(Tuning.MIN_BOUNCE_VELOCITY, impact * Tuning.BOUNCE_RATIO)
+			var timed := _jump_buffer > 0.0
+			if timed:
+				velocity.y = minf(Tuning.MAX_TIMED_BOUNCE_VELOCITY, maxf(velocity.y, impact) + Tuning.TIMED_BOUNCE_BONUS)
+				_jump_buffer = 0.0
+			launched.emit(velocity.y, timed)
 	_was_on_floor = is_on_floor()
 
 	_visual.face(input, delta)

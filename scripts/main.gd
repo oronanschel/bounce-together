@@ -7,12 +7,9 @@ const Arena := preload("res://scripts/arena.gd")
 const Player := preload("res://scripts/player.gd")
 const Hud := preload("res://scripts/ui.gd")
 const Fx := preload("res://scripts/fx.gd")
+const Tuning := preload("res://scripts/physics_tuning.gd")
 
-const ARENA_RADIUS := 8.0
 const BOUNCER_COUNT := 7
-const HIT_DISTANCE := 1.12
-const HIT_COOLDOWN := 0.55
-const OUT_HEIGHT := -0.8  # below the arena top (y = 0) means you fell off
 
 var players: Array = []
 var hud
@@ -26,7 +23,7 @@ func _ready() -> void:
 	_setup_input()
 	_build_environment()
 	arena = Arena.new()
-	arena.radius = ARENA_RADIUS
+	arena.radius = Tuning.ARENA_RADIUS
 	add_child(arena)
 	hud = Hud.new()
 	add_child(hud)
@@ -139,7 +136,7 @@ func _physics_process(delta: float) -> void:
 	bot_think_time -= delta
 	if bot_think_time <= 0.0:
 		_update_bots()
-		bot_think_time = 0.3
+		bot_think_time = Tuning.BOT_THINK_SECONDS
 	for key in hit_cooldowns.keys():
 		hit_cooldowns[key] -= delta
 		if hit_cooldowns[key] <= 0.0:
@@ -149,7 +146,7 @@ func _physics_process(delta: float) -> void:
 	# Mark all falls first so simultaneous knockouts can produce a draw.
 	var newly_out: Array = []
 	for p in players:
-		if not p.is_out and p.global_position.y < OUT_HEIGHT:
+		if not p.is_out and p.global_position.y < Tuning.OUT_HEIGHT:
 			p.is_out = true
 			newly_out.append(p)
 	if newly_out.is_empty():
@@ -193,10 +190,10 @@ func _update_bots() -> void:
 		var steering := Vector2(toward.x, toward.z).normalized()
 		var radial := Vector2(bot.global_position.x, bot.global_position.z)
 		# Turn inward near the edge, but momentum from a bump can still knock out a bot.
-		if radial.length() > ARENA_RADIUS - 2.0:
-			steering -= radial.normalized() * 1.5
+		if radial.length() > Tuning.ARENA_RADIUS - Tuning.BOT_EDGE_MARGIN:
+			steering -= radial.normalized() * Tuning.BOT_EDGE_STEER
 		bot.bot_direction = steering.normalized()
-		bot.bot_jump = nearest_distance < 5.0 and randf() < 0.2
+		bot.bot_jump = nearest_distance < Tuning.BOT_JUMP_DISTANCE_SQUARED and randf() < Tuning.BOT_JUMP_CHANCE
 
 
 func _resolve_bumps() -> void:
@@ -213,12 +210,12 @@ func _resolve_bumps() -> void:
 				continue
 			var separation: Vector3 = b.global_position - a.global_position
 			var horizontal := Vector2(separation.x, separation.z)
-			if horizontal.length() > HIT_DISTANCE or abs(separation.y) > 1.2:
+			if horizontal.length() > Tuning.HIT_DISTANCE or abs(separation.y) > Tuning.HIT_VERTICAL_RANGE:
 				continue
 			var direction := horizontal.normalized() if horizontal.length() > 0.001 else Vector2.RIGHT
-			var impulse := Vector3(direction.x, 0, direction.y) * 6.5
+			var impulse := Vector3(direction.x, 0, direction.y) * Tuning.HIT_IMPULSE
 			a.knockback -= impulse
 			b.knockback += impulse
-			a.velocity.y = maxf(a.velocity.y, 2.0)
-			b.velocity.y = maxf(b.velocity.y, 2.0)
-			hit_cooldowns[key] = HIT_COOLDOWN
+			a.velocity.y = maxf(a.velocity.y, Tuning.HIT_LIFT)
+			b.velocity.y = maxf(b.velocity.y, Tuning.HIT_LIFT)
+			hit_cooldowns[key] = Tuning.HIT_COOLDOWN
