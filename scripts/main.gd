@@ -82,7 +82,7 @@ func start_round() -> void:
 	players.clear()
 	round_over = false
 	var p := Player.new()
-	p.body_color = Color("8f5bd8")
+	p.body_color = preload("res://scripts/character_visual.gd").PALETTE[0]
 	p.position = Vector3(0, 1.5, 0)
 	add_child(p)
 	p.landed.connect(_on_player_landed.bind(p))
