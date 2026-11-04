@@ -9,6 +9,7 @@ const CREAM := Color("fffaf0")
 const CORAL := Color("f2766b")
 const STICK_RADIUS := 80.0
 const JUMP_RADIUS := 70.0
+const RESTART_RADIUS := 34.0
 
 var _stick_finger := -1
 var _stick_origin := Vector2.ZERO
@@ -28,6 +29,10 @@ func _screen() -> Vector2:
 	return get_viewport_rect().size
 
 
+func _restart_center() -> Vector2:
+	return Vector2(_screen().x - 60, 60)
+
+
 func _jump_center() -> Vector2:
 	return _screen() - Vector2(130, 140)
 
@@ -36,7 +41,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		visible = true
 		if event.pressed:
-			if event.position.distance_to(_jump_center()) < JUMP_RADIUS * 1.4:
+			if event.position.distance_to(_restart_center()) < RESTART_RADIUS * 1.5:
+				# Always-available restart (e.g. after you're out but bots are still bouncing).
+				_tap_restart()
+			elif event.position.distance_to(_jump_center()) < JUMP_RADIUS * 1.4:
 				_jump_finger = event.index
 				Input.action_press("jump")
 			elif event.position.x < _screen().x * 0.5 and _stick_finger == -1:
@@ -90,6 +98,14 @@ func _set_axis(neg: String, pos: String, value: float) -> void:
 
 
 func _draw() -> void:
+	var rc := _restart_center()
+	draw_circle(rc, RESTART_RADIUS, CREAM)
+	draw_arc(rc, RESTART_RADIUS, 0, TAU, 32, INK, 3.0, true)
+	# Circular arrow icon.
+	draw_arc(rc, 14, -PI * 0.35, PI * 1.35, 24, INK, 4.0, true)
+	var tip := rc + Vector2(cos(-PI * 0.35), sin(-PI * 0.35)) * 14
+	draw_colored_polygon(PackedVector2Array([tip + Vector2(-7, -6), tip + Vector2(7, -3), tip + Vector2(-1, 8)]), INK)
+
 	var jc := _jump_center()
 	var pressed := _jump_finger != -1
 	draw_circle(jc + Vector2(0, 6), JUMP_RADIUS, INK.lerp(CREAM, 0.5))
