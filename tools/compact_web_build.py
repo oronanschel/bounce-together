@@ -20,10 +20,11 @@ SHIM = """<script>
   const realFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
     const url = typeof input === 'string' ? input : input.url;
+    if (/index\\.pck(\\?|$)/.test(url)) return realFetch(url.replace(/index\\.pck/, 'index.pck.wasm'), init);
     if (!/index\\.wasm(\\?|$)/.test(url)) return realFetch(input, init);
     const base = url.replace(/index\\.wasm.*$/, '');
     const parts = [];
-    for (let i = 0; i < PARTS; i++) parts.push(realFetch(base + 'index.wasm.gz.part' + i).then(r => r.blob()));
+    for (let i = 0; i < PARTS; i++) parts.push(realFetch(base + 'index.wasm.gz.part' + i + '.wasm').then(r => r.blob()));
     return Promise.all(parts).then(blobs => {
       const stream = new Blob(blobs).stream().pipeThrough(new DecompressionStream('gzip'));
       return new Response(stream, { headers: { 'Content-Type': 'application/wasm', 'Content-Length': '%d' } });
@@ -39,13 +40,16 @@ def main(src: str, dst: str) -> None:
         shutil.rmtree(dst)
     os.makedirs(dst)
     for name in os.listdir(src):
-        if name != "index.wasm":
+        if name == "index.pck":
+            # Some hosts only accept common web file types; serve the game pack as .wasm bytes.
+            shutil.copy2(os.path.join(src, name), os.path.join(dst, "index.pck.wasm"))
+        elif name != "index.wasm":
             shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
     raw = open(os.path.join(src, "index.wasm"), "rb").read()
     packed = gzip.compress(raw, 9)
     count = 0
     for i in range(0, len(packed), PART_SIZE):
-        with open(os.path.join(dst, "index.wasm.gz.part%d" % count), "wb") as f:
+        with open(os.path.join(dst, "index.wasm.gz.part%d.wasm" % count), "wb") as f:
             f.write(packed[i : i + PART_SIZE])
         count += 1
     html_path = os.path.join(dst, "index.html")

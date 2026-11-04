@@ -115,10 +115,11 @@ body {
   const realFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
     const url = typeof input === 'string' ? input : input.url;
+    if (/index\.pck(\?|$)/.test(url)) return realFetch(url.replace(/index\.pck/, 'index.pck.wasm'), init);
     if (!/index\.wasm(\?|$)/.test(url)) return realFetch(input, init);
     const base = url.replace(/index\.wasm.*$/, '');
     const parts = [];
-    for (let i = 0; i < PARTS; i++) parts.push(realFetch(base + 'index.wasm.gz.part' + i).then(r => r.blob()));
+    for (let i = 0; i < PARTS; i++) parts.push(realFetch(base + 'index.wasm.gz.part' + i + '.wasm').then(r => r.blob()));
     return Promise.all(parts).then(blobs => {
       const stream = new Blob(blobs).stream().pipeThrough(new DecompressionStream('gzip'));
       return new Response(stream, { headers: { 'Content-Type': 'application/wasm', 'Content-Length': '39514754' } });

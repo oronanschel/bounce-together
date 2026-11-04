@@ -21,7 +21,7 @@ python3 -m http.server 8000 --directory build/web
 ### Compact build for size-limited hosts
 
 `build/web-compact/` is the same game with the engine binary gzipped and split into parts under 8 MiB
-(~10 MB total). A small script in its `index.html` reassembles it in the browser. Regenerate after each export:
+(~10 MB total), and the game pack is served as `index.pck.wasm`, because some hosts accept only common web file types. A small script in its `index.html` reassembles everything in the browser. Regenerate after each export:
 `python3 tools/compact_web_build.py build/web build/web-compact`
 
 ### Open / export with Godot
