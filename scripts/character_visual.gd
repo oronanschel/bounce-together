@@ -20,6 +20,8 @@ var _walk := 0.0
 var _speed := 0.0
 var _vy := 0.0
 var _height := 0.0
+var _dizzy := 0.0
+var _mat: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -29,6 +31,7 @@ func _ready() -> void:
 	mat.rim_enabled = true
 	mat.rim = 0.35
 	mat.rim_tint = 0.3
+	_mat = mat
 	var foot_mat := StandardMaterial3D.new()
 	foot_mat.albedo_color = color.darkened(0.12)
 	foot_mat.roughness = 0.5
@@ -102,6 +105,17 @@ func _process(delta: float) -> void:
 		_feet[i].position.y = 0.13 + max(0.0, sin(phase)) * 0.14
 		_feet[i].position.z = 0.08 + cos(phase) * 0.12 * min(_speed / 6.0, 1.0)
 	_body.rotation.z = sin(_walk) * 0.06 * min(_speed / 6.0, 1.0)
+
+	# Knocked out (parent.is_out): dizzy wobble-spin and a slightly faded colour.
+	var out: bool = get_parent().get("is_out") == true
+	if out:
+		_dizzy += delta
+		_body.rotation.z = sin(_dizzy * 9.0) * 0.35
+		rotation.y += delta * 6.0 * max(0.0, 1.0 - _dizzy / 2.5)
+		_mat.albedo_color = color.lerp(Color(0.85, 0.82, 0.8), min(_dizzy, 0.5))
+	elif _dizzy > 0.0:
+		_dizzy = 0.0
+		_mat.albedo_color = color
 
 	var s: float = clamp(1.0 - _height / 6.0, 0.35, 1.0)
 	_shadow.scale = Vector3(s, 1, s)

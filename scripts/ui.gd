@@ -6,6 +6,8 @@ const CREAM := Color("fffaf0")
 
 var _remaining: Label
 var _center: Label
+var _card: PanelContainer
+var _toast: Label
 var _help: Label
 var _touch
 
@@ -40,10 +42,39 @@ func _ready() -> void:
 	_center.add_theme_constant_override("outline_size", 12)
 	_center.add_theme_font_size_override("font_size", 48)
 	_center.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_center.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_center.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_center.grow_vertical = Control.GROW_DIRECTION_BOTH
-	add_child(_center)
+	_card = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = CREAM
+	sb.border_color = INK
+	sb.set_border_width_all(5)
+	sb.set_corner_radius_all(48)
+	sb.content_margin_left = 48
+	sb.content_margin_right = 48
+	sb.content_margin_top = 24
+	sb.content_margin_bottom = 28
+	sb.shadow_color = Color(INK, 0.25)
+	sb.shadow_size = 0
+	sb.shadow_offset = Vector2(0, 10)
+	_card.add_theme_stylebox_override("panel", sb)
+	_card.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_card.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_card.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_card.visible = false
+	_card.add_child(_center)
+	add_child(_card)
+
+	_toast = Label.new()
+	_toast.add_theme_font_size_override("font_size", 34)
+	_toast.add_theme_color_override("font_outline_color", CREAM)
+	_toast.add_theme_constant_override("outline_size", 10)
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.anchor_left = 0.5
+	_toast.anchor_right = 0.5
+	_toast.offset_left = -300
+	_toast.offset_right = 300
+	_toast.offset_top = 130
+	_toast.modulate.a = 0.0
+	add_child(_toast)
 
 
 func _pill(text: String, size: int) -> PanelContainer:
@@ -74,6 +105,8 @@ func set_remaining(n: int) -> void:
 func show_playing(n: int) -> void:
 	set_remaining(n)
 	_center.text = ""
+	_card.visible = false
+	_toast.modulate.a = 0.0
 	_touch.restart_enabled = false
 
 
@@ -89,6 +122,7 @@ func show_game_over(message: String) -> void:
 	_center.remove_theme_color_override("font_color")
 	_center.add_theme_color_override("font_color", INK)
 	_center.text = message + "\n" + _restart_hint()
+	_pop_card()
 	_touch.restart_enabled = true
 
 
@@ -96,7 +130,29 @@ func show_game_over(message: String) -> void:
 func show_win(winner_name: String, winner_color: Color = INK) -> void:
 	_center.add_theme_color_override("font_color", winner_color.darkened(0.25))
 	_center.text = "%s wins!\n%s" % [winner_name, _restart_hint()]
+	_pop_card()
 	_touch.restart_enabled = true
+
+
+## Short "<name> is out!" pop under the title while the round continues.
+func flash_out(player_name: String, color: Color = INK) -> void:
+	_toast.text = "%s is out!" % player_name
+	_toast.add_theme_color_override("font_color", color.darkened(0.3))
+	_toast.modulate.a = 1.0
+	_toast.scale = Vector2(0.6, 0.6)
+	_toast.pivot_offset = Vector2(300, 20)
+	var t := create_tween()
+	t.tween_property(_toast, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_interval(1.2)
+	t.tween_property(_toast, "modulate:a", 0.0, 0.4)
+
+
+func _pop_card() -> void:
+	_card.visible = true
+	_card.reset_size()
+	_card.pivot_offset = _card.size / 2
+	_card.scale = Vector2(0.5, 0.5)
+	create_tween().tween_property(_card, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Cloud-shaped title banner drawn from overlapping circles (no texture needed).
