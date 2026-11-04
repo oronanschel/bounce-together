@@ -6,6 +6,8 @@ const CREAM := Color("fffaf0")
 
 var _remaining: Label
 var _center: Label
+var _help: Label
+var _touch
 
 
 func _ready() -> void:
@@ -19,7 +21,11 @@ func _ready() -> void:
 	add_child(counter)
 	_remaining = counter.get_child(0)
 
+	_touch = preload("res://scripts/touch_controls.gd").new()
+	add_child(_touch)
+
 	var help := Label.new()
+	_help = help
 	help.text = "WASD / arrows: move   Space: jump   R: restart"
 	help.add_theme_color_override("font_color", INK)
 	help.add_theme_font_size_override("font_size", 18)
@@ -68,18 +74,29 @@ func set_remaining(n: int) -> void:
 func show_playing(n: int) -> void:
 	set_remaining(n)
 	_center.text = ""
+	_touch.restart_enabled = false
+
+
+func _restart_hint() -> String:
+	return "Tap to bounce again" if _touch.visible else "Press R to bounce again"
+
+
+func _process(_delta: float) -> void:
+	_help.visible = not _touch.visible
 
 
 func show_game_over(message: String) -> void:
 	_center.remove_theme_color_override("font_color")
 	_center.add_theme_color_override("font_color", INK)
-	_center.text = message + "\nPress R to bounce again"
+	_center.text = message + "\n" + _restart_hint()
+	_touch.restart_enabled = true
 
 
 ## Winner overlay for gameplay to call when one bouncer is left.
 func show_win(winner_name: String, winner_color: Color = INK) -> void:
 	_center.add_theme_color_override("font_color", winner_color.darkened(0.25))
-	_center.text = "%s wins!\nPress R to bounce again" % winner_name
+	_center.text = "%s wins!\n%s" % [winner_name, _restart_hint()]
+	_touch.restart_enabled = true
 
 
 ## Cloud-shaped title banner drawn from overlapping circles (no texture needed).

@@ -5,7 +5,7 @@ An open Godot party-game project, starting with a bouncy last-player-standing ar
 
 A Soft Play arena in Godot 4.7.2 + GDScript, exported for the browser.
 
-- **Controls:** WASD / arrow keys to move, Space to jump, R to restart.
+- **Controls:** WASD / arrow keys to move, Space to jump, R to restart. On touch screens: drag on the left half to move, tap JUMP; tap to restart after a round.
 - **Rules (so far):** fall off the teal floor and you're out. Multiple bouncers, knockouts and last-one-standing are coming next.
 
 ### Play the web build locally
