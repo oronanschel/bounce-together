@@ -9,12 +9,17 @@ const CharacterVisual := preload("res://scripts/character_visual.gd")
 
 var body_color := Color("8f5bd8")
 var is_out := false
+var is_bot := false
+var bot_direction := Vector2.ZERO
+var bot_jump := false
+var knockback := Vector3.ZERO
 
 const SPEED := 6.0
 const ACCEL := 30.0
 const JUMP_VELOCITY := 9.0
 const GRAVITY := 22.0
-const BOUNCE := 0.45
+const BOUNCE := 0.58
+const KNOCKBACK_DRAG := 2.0
 
 var _was_on_floor := false
 var _last_fall_speed := 0.0
@@ -42,15 +47,25 @@ func _physics_process(delta: float) -> void:
 
 	var input := Vector2.ZERO
 	if not is_out:
-		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		if is_bot:
+			input = bot_direction
+		else:
+			input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var target := Vector3(input.x, 0, input.y) * SPEED
 	velocity.x = move_toward(velocity.x, target.x, ACCEL * delta)
 	velocity.z = move_toward(velocity.z, target.z, ACCEL * delta)
 
-	if is_on_floor() and not is_out and Input.is_action_just_pressed("jump"):
+	if is_on_floor() and not is_out and (bot_jump if is_bot else Input.is_action_just_pressed("jump")):
 		velocity.y = JUMP_VELOCITY
 
+	# External impulses persist separately from steering so a hit can carry a
+	# bouncer off the edge instead of being immediately cancelled by input.
+	velocity.x += knockback.x
+	velocity.z += knockback.z
 	move_and_slide()
+	velocity.x -= knockback.x
+	velocity.z -= knockback.z
+	knockback = knockback.move_toward(Vector3.ZERO, KNOCKBACK_DRAG * delta)
 
 	if is_on_floor() and not _was_on_floor:
 		var impact := _last_fall_speed

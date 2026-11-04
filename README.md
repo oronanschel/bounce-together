@@ -6,7 +6,7 @@ An open Godot party-game project, starting with a bouncy last-player-standing ar
 A Soft Play arena in Godot 4.7.2 + GDScript, exported for the browser.
 
 - **Controls:** WASD / arrow keys to move, Space to jump, R to restart. On touch screens: drag on the left half to move, tap JUMP; tap to restart after a round.
-- **Rules (so far):** fall off the teal floor and you're out. Multiple bouncers, knockouts and last-one-standing are coming next.
+- **Rules:** You are purple. Bump into six computer opponents to knock them off the teal floor; falling out eliminates a bouncer, and the last one standing wins. Press R (or tap after the round) for a fresh round.
 
 ### Play the web build locally
 
@@ -33,12 +33,16 @@ python3 -m http.server 8000 --directory build/web
    or clear the custom template fields to use your installed templates. Then:
    `godot --headless --path . --export-release Web build/web/index.html`
 
+### Gameplay smoke check
+
+Run `godot --headless --path . --script res://tests/round_smoke.gd` to check spawning, bumps, elimination, wins, draws and restart.
+
 ### Layout
 
 | Path | What | Owner (current) |
 | --- | --- | --- |
-| `scripts/main.gd` | round manager: spawn, out check, restart | gameplay (ring-builder) |
-| `scripts/player.gd` | placeholder bouncer: movement, jump, squash & stretch | gameplay + look |
+| `scripts/main.gd` | round manager: spawn, out check, restart | gameplay (codex-bouncer) |
+| `scripts/player.gd` | placeholder bouncer: movement, jump, squash & stretch | gameplay (codex-bouncer), visual hooks (bounce-artist) |
 | `scripts/arena.gd` | floor, rim, room | physics + look |
 | `scripts/ui.gd`, `scripts/room.gd`, `scripts/fx.gd`, `shaders/` | HUD, room, effects, materials | look & feel (bounce-artist) |
 | `docs/reference/` | visual reference (concept art, not gameplay) | — |
