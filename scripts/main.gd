@@ -93,7 +93,7 @@ func start_round() -> void:
 	for i in BOUNCER_COUNT:
 		var p := Player.new()
 		p.body_color = visual.PALETTE[i]
-		p.set_meta("display_name", "You" if i == 0 else visual.NAMES[i])
+		p.set_meta("display_name", visual.NAMES[i])
 		p.is_bot = i != 0
 		var angle := TAU * float(i) / BOUNCER_COUNT
 		p.position = Vector3(cos(angle) * 3.5, 1.5, sin(angle) * 3.5)
