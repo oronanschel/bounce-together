@@ -8,7 +8,7 @@ static var _cache := {}
 
 static func play(parent: Node, sound: String, volume := 1.0, pitch := 1.0) -> void:
 	var p := AudioStreamPlayer.new()
-	p.stream = _get(sound)
+	p.stream = _stream_for(sound)
 	p.volume_db = linear_to_db(clampf(volume, 0.01, 1.0)) - 4.0
 	p.pitch_scale = pitch
 	parent.add_child(p)
@@ -16,7 +16,7 @@ static func play(parent: Node, sound: String, volume := 1.0, pitch := 1.0) -> vo
 	p.play()
 
 
-static func _get(sound: String) -> AudioStreamWAV:
+static func _stream_for(sound: String) -> AudioStreamWAV:
 	if not _cache.has(sound):
 		_cache[sound] = _make(sound)
 	return _cache[sound]
