@@ -85,6 +85,11 @@ func land(impact: float) -> void:
 	_squash = clamp(impact / 14.0, 0.0, 0.55)
 
 
+## Stretch upward on launch (jump or trampoline bounce); strength 0..1.
+func launch(strength: float = 0.5) -> void:
+	_squash = -clamp(strength, 0.0, 1.0) * 0.35
+
+
 func face(direction: Vector2, delta: float) -> void:
 	if direction.length() > 0.1:
 		rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.y), 12.0 * delta)
