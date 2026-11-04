@@ -14,6 +14,7 @@ const OUT_HEIGHT := -0.8  # below the arena top (y = 0) means you fell off
 var players: Array = []
 var hud
 var arena
+var camera
 var round_over := false
 
 
@@ -68,12 +69,13 @@ func _build_environment() -> void:
 
 
 func _build_camera() -> void:
-	var cam := Camera3D.new()
+	var cam := preload("res://scripts/camera_shake.gd").new()
 	cam.fov = 50
 	cam.position = Vector3(0, 11, 17)
 	add_child(cam)
 	cam.look_at(Vector3(0, -0.5, 0.5), Vector3.UP)
 	cam.current = true
+	camera = cam
 
 
 func start_round() -> void:
@@ -95,6 +97,8 @@ func _on_player_landed(impact: float, p: Node3D) -> void:
 	if impact < 2.0:
 		return
 	Fx.landing_puff(self, p.global_position, impact)
+	if impact > 12.0:
+		camera.shake((impact - 12.0) / 15.0)
 	if p.global_position.y > -0.2:
 		arena.add_dent(p.global_position, impact / 12.0)
 
