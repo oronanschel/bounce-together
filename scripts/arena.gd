@@ -35,9 +35,9 @@ func add_dent(world_pos: Vector3, strength: float) -> void:
 func _process(delta: float) -> void:
 	for i in MAX_DENTS:
 		var d := _dents[i]
-		d.w = move_toward(d.w, 0.0, delta * 1.5)
+		d.w = move_toward(d.w, 0.0, delta * 0.8)
 		_dents[i] = d
-	_floor_mat.set_shader_parameter("dents", _dents)
+		_floor_mat.set_shader_parameter("dent%d" % i, d)
 
 
 func _mat(color: Color, rough := 0.85) -> StandardMaterial3D:
@@ -62,21 +62,24 @@ func _build_floor() -> void:
 	cm.bottom_radius = radius
 	cm.height = 1.0
 	cm.radial_segments = 64
+	cm.cap_top = false  # the quilted plane below is the top surface
 	mesh.mesh = cm
 	mesh.material_override = _mat(TEAL.darkened(0.15))
 	body.add_child(mesh)
 	# Quilted top surface as a thin disc so the shader only covers the top.
+	# Subdivided plane (clipped to a circle in the shader) so landings can
+	# visibly press dents into the cushions.
 	var top := MeshInstance3D.new()
-	var tm := CylinderMesh.new()
-	tm.top_radius = radius - 0.05
-	tm.bottom_radius = radius - 0.05
-	tm.height = 0.02
-	tm.radial_segments = 64
+	var tm := PlaneMesh.new()
+	tm.size = Vector2(radius * 2, radius * 2)
+	tm.subdivide_width = 63
+	tm.subdivide_depth = 63
 	top.mesh = tm
 	_floor_mat = ShaderMaterial.new()
 	_floor_mat.shader = preload("res://shaders/quilted_floor.gdshader")
 	top.material_override = _floor_mat
-	top.position.y = 0.5
+	_floor_mat.set_shader_parameter("radius", radius - 0.05)
+	top.position.y = 0.51
 	body.add_child(top)
 	body.position.y = -0.5
 	add_child(body)
